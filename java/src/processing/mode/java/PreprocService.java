@@ -370,6 +370,10 @@ public class PreprocService {
         workBuffer.append(newPieceBuilt);
       }
     }
+    
+    if (numLines > 2000) {
+      System.out.println("Warning: Your sketch is very large and may be hard to debug.");
+    }
     result.tabStartOffsets = tabStartsList.toArray();
 
     String pdeStage = result.pdeCode = workBuffer.toString();
