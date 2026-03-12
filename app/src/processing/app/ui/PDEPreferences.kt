@@ -27,6 +27,7 @@ import androidx.compose.ui.window.application
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import processing.app.DEFAULTS_FILE_NAME
 import processing.app.LocalPreferences
 import processing.app.ReactiveProperties
 import processing.app.ui.PDEPreferences.Companion.preferences
@@ -35,6 +36,7 @@ import processing.app.ui.theme.*
 import java.awt.Dimension
 import java.awt.event.WindowEvent
 import java.awt.event.WindowListener
+import java.util.*
 import javax.swing.SwingUtilities
 import javax.swing.WindowConstants
 
@@ -99,7 +101,7 @@ class PDEPreferences {
             Interface.register()
             Coding.register()
             Sketches.register()
-            Other.register(panes)
+            Other.register()
         }
 
         /**
@@ -110,6 +112,8 @@ class PDEPreferences {
         fun preferences() {
             val locale = LocalLocale.current
             var preferencesQuery by remember { mutableStateOf("") }
+
+            Other.handleOtherPreferences(panes)
 
             /**
              * Filter panes based on the search query.
@@ -441,7 +445,7 @@ private val LocalModifiablePreferences =
     compositionLocalOf { ModifiablePreference(null, false, { }, {}) }
 
 /**
- * Composable function that provides a modifiable copy of the current preferences.
+ * Composable function that captures an initial copy of the current preferences.
  * This allows for temporary changes to preferences that can be reset or applied later.
  *
  * @param content The composable content that will have access to the modifiable preferences.
@@ -498,13 +502,13 @@ private fun CapturePreferences(content: @Composable () -> Unit) {
     }
 
     val apply = {
-        modified.entries.forEach { (key, value) ->
-            prefs.setProperty(key as String, (value ?: "") as String)
+        prefs.entries.forEach { (key, value) ->
+            modified.setProperty(key as String, (value ?: "") as String)
         }
     }
     val reset = {
         modified.entries.forEach { (key, value) ->
-            modified.setProperty(key as String, prefs[key] ?: "")
+            prefs.setProperty(key as String, modified[key] ?: "")
         }
     }
     val state = ModifiablePreference(
@@ -515,7 +519,6 @@ private fun CapturePreferences(content: @Composable () -> Unit) {
     )
 
     CompositionLocalProvider(
-        LocalPreferences provides modified,
         LocalModifiablePreferences provides state
     ) {
         content()
@@ -591,9 +594,16 @@ fun PDEPreferencePane.showPane(groups: PDEPreferenceGroups) {
                 val prefs = LocalPreferences.current
                 TextButton(
                     onClick = {
+                        val defaultsStream =
+                            ClassLoader.getSystemResourceAsStream(DEFAULTS_FILE_NAME) ?: return@TextButton
+                        val defaults = Properties().apply {
+                            defaultsStream.reader(Charsets.UTF_8).use {
+                                load(it)
+                            }
+                        }
                         groups.forEach { group ->
                             group.forEach { pref ->
-                                prefs.remove(pref.key)
+                                prefs[pref.key] = defaults.getProperty(pref.key, "")
                             }
                         }
                     }
