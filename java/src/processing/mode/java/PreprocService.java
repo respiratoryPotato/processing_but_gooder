@@ -516,9 +516,17 @@ public class PreprocService {
     }
 
     // Get compilation problems
-    List<IProblem> bindingsProblems = bindingsCompile.getProblems();
-    result.hasCompilationErrors =
-      bindingsProblems.stream().anyMatch(IProblem::isError);
+    for (IProblem problem : bindingsProblems) {
+  if (problem.isError()) {
+    String msg = problem.getMessage();
+
+    if (msg.contains("';' expected")) {
+      msg += " (Hint: You probably forgot a semicolon at the end of a line.)";
+    }
+
+    System.out.println(msg);
+  }
+}
 
     // Update builder
     result.offsetMapper = parsableMapper.thenMapping(compilableMapper);
