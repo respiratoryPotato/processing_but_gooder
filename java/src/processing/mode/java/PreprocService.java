@@ -370,7 +370,7 @@ public class PreprocService {
         workBuffer.append(newPieceBuilt);
       }
     }
-    
+
     if (numLines > 2000) {
       System.out.println("Warning: Your sketch is very large and may be hard to debug.");
     }
@@ -494,6 +494,18 @@ public class PreprocService {
         false
     );
     CompilationUnit compilableCU = compilableCompile.getCompilationUnit();
+
+    //style warnings
+    compilableCU.accept(new ASTVisitor() {
+  public boolean visit(MethodDeclaration node) {
+    if (node.getName().toString().equals("draw")) {
+      if (node.getBody().statements().isEmpty()) {
+        System.out.println("Warning: draw() is empty.");
+      }
+    }
+    return true;
+  }
+});
 
     // Get syntax problems from compilable AST
     result.hasSyntaxErrors |=
