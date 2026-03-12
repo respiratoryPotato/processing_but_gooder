@@ -74,7 +74,7 @@ import processing.utils.SketchException;
  * via a callback registered by an {Editor}.
  */
 public class PreprocService {
-  private final static int TIMEOUT_MILLIS = 100;
+  private final static int TIMEOUT_MILLIS = 50;
   private final static int BLOCKING_TIMEOUT_SECONDS = 3000;
 
   protected final JavaMode javaMode;
