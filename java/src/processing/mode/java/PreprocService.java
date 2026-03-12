@@ -423,6 +423,15 @@ public class PreprocService {
         .forEach(result.otherProblems::add);
 
       result.hasSyntaxErrors = true;
+      preprocessorResult.getPreprocessIssues().forEach(issue -> {
+        String msg = issue.getMessage();
+
+        if (msg.contains("missing")) {
+          msg += " (Hint: check your parentheses or braces.)";
+        }
+
+        System.out.println(msg);
+      });
     }
 
     // Save off the imports
