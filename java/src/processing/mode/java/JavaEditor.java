@@ -1760,6 +1760,13 @@ public class JavaEditor extends Editor {
 
     for (Problem p : problems) {
       String message = p.getMessage();
+      if (message.contains("';' expected")) {
+        message += " — You may have forgotten a semicolon at the end of a line.";
+      }
+
+      if (message.contains("cannot find symbol")) {
+        message += " — This usually means a variable or function name is misspelled.";
+      }
 
       if (p.getClass().equals(JavaProblem.class)) {
         JavaProblem jp = (JavaProblem) p;
