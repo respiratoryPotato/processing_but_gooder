@@ -56,26 +56,40 @@ class Schema {
             handleSketchOptions(uri, tempSketchFolder)
             return base?.handleOpenUntitled(tempSketchFile.absolutePath)
         }
-        private fun handleSketchUrl(uri: URI): Editor?{
-            val url = File(uri.path.replace("/url/", ""))
+        private fun handleSketchUrl(uri: URI): Editor? {
+    val url = File(uri.path.replace("/url/", ""))
 
-            val rand = (1..6)
-                .map { (('a'..'z') + ('A'..'Z')).random() }
-                .joinToString("")
+    // Validate that a URL was actually provided before attempting a download
+    if (url.path.isBlank()) {
+        Messages.err("pde:// error: No URL was provided for sketch/url")
+        return null
+    }
 
-            val tempSketchFolder = File(File(Base.untitledFolder, rand), url.nameWithoutExtension)
-            tempSketchFolder.mkdirs()
-            val tempSketchFile = File(tempSketchFolder, "${tempSketchFolder.name}.pde")
+    val rand = (1..6)
+        .map { (('a'..'z') + ('A'..'Z')).random() }
+        .joinToString("")
 
+    val tempSketchFolder = File(File(Base.untitledFolder, rand), url.nameWithoutExtension)
+    tempSketchFolder.mkdirs()
+    val tempSketchFile = File(tempSketchFolder, "${tempSketchFolder.name}.pde")
 
-            URL("https://$url").openStream().use { input ->
-                FileOutputStream(tempSketchFile).use { output ->
-                    input.copyTo(output)
-                }
+    // Wrap download in try/catch so a bad or unreachable URL gives the user
+    // a clear error message instead of crashing silently
+    try {
+        URL("https://$url").openStream().use { input ->
+            FileOutputStream(tempSketchFile).use { output ->
+                input.copyTo(output)
             }
-            handleSketchOptions(uri, tempSketchFolder)
-            return base?.handleOpenUntitled(tempSketchFile.absolutePath)
         }
+    } catch (e: Exception) {
+        Messages.err("pde:// error: Could not load sketch from URL '$url'. Check that the URL is correct and accessible.")
+        tempSketchFolder.deleteRecursively()
+        return null
+    }
+
+    handleSketchOptions(uri, tempSketchFolder)
+    return base?.handleOpenUntitled(tempSketchFile.absolutePath)
+}
         private fun handleSketchOptions(uri: URI, sketchFolder: File){
             val options = uri.query?.split("&")
                 ?.map { it.split("=", limit = 2) }
