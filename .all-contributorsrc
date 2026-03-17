@@ -1473,7 +1473,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/138858208?v=4",
       "profile": "https://github.com/Rishab87",
       "contributions": [
-        "code"
+        "code",
+        "test"
       ]
     },
     {
@@ -1722,6 +1723,15 @@
       "profile": "https://mcintyre.io",
       "contributions": [
         "test"
+      ]
+    },
+    {
+      "login": "Ebaron96",
+      "name": "Elijah Baron",
+      "avatar_url": "https://avatars.githubusercontent.com/u/180047692?v=4",
+      "profile": "https://github.com/Ebaron96",
+      "contributions": [
+        "bug"
       ]
     }
   ],
