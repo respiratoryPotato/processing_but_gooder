@@ -441,6 +441,10 @@ tasks.register<Download>("includeProcessingExamples") {
             }
             into(composeResources("/modes/java/examples"))
         }
+        copy {
+            from("examples")
+            into(composeResources("/modes/java/examples"))
+        }
     }
 }
 tasks.register<Download>("includeProcessingWebsiteExamples") {
