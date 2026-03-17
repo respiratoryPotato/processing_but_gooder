@@ -74,7 +74,7 @@ import processing.utils.SketchException;
  * via a callback registered by an {Editor}.
  */
 public class PreprocService {
-  private final static int TIMEOUT_MILLIS = 100;
+  private final static int TIMEOUT_MILLIS = 50;
   private final static int BLOCKING_TIMEOUT_SECONDS = 3000;
 
   protected final JavaMode javaMode;
@@ -370,6 +370,10 @@ public class PreprocService {
         workBuffer.append(newPieceBuilt);
       }
     }
+
+    if (numLines > 2000) {
+      System.out.println("Warning: Your sketch is very large and may be hard to debug.");
+    }
     result.tabStartOffsets = tabStartsList.toArray();
 
     String pdeStage = result.pdeCode = workBuffer.toString();
@@ -419,6 +423,15 @@ public class PreprocService {
         .forEach(result.otherProblems::add);
 
       result.hasSyntaxErrors = true;
+      preprocessorResult.getPreprocessIssues().forEach(issue -> {
+        String msg = issue.getMessage();
+
+        if (msg.contains("missing")) {
+          msg += " (Hint: check your parentheses or braces.)";
+        }
+
+        System.out.println(msg);
+      });
     }
 
     // Save off the imports
@@ -491,6 +504,18 @@ public class PreprocService {
     );
     CompilationUnit compilableCU = compilableCompile.getCompilationUnit();
 
+    //style warnings
+    compilableCU.accept(new ASTVisitor() {
+  public boolean visit(MethodDeclaration node) {
+    if (node.getName().toString().equals("draw")) {
+      if (node.getBody().statements().isEmpty()) {
+        System.out.println("Warning: draw() is empty.");
+      }
+    }
+    return true;
+  }
+});
+
     // Get syntax problems from compilable AST
     result.hasSyntaxErrors |=
       Arrays.stream(compilableCU.getProblems()).anyMatch(IProblem::isError);
@@ -516,9 +541,17 @@ public class PreprocService {
     }
 
     // Get compilation problems
-    List<IProblem> bindingsProblems = bindingsCompile.getProblems();
-    result.hasCompilationErrors =
-      bindingsProblems.stream().anyMatch(IProblem::isError);
+    for (IProblem problem : bindingsProblems) {
+  if (problem.isError()) {
+    String msg = problem.getMessage();
+
+    if (msg.contains("';' expected")) {
+      msg += " (Hint: You probably forgot a semicolon at the end of a line.)";
+    }
+
+    System.out.println(msg);
+  }
+}
 
     // Update builder
     result.offsetMapper = parsableMapper.thenMapping(compilableMapper);
